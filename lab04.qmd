@@ -81,10 +81,10 @@ where:
 
 and $X_0 = 0$, $y_t \sim LogNormal(\log(0.03), 0.25)$, $q=2.5$, and $b=0.4$.
 
-The goal of the optimization is to maximize the town's average phosphorous concentration releases (as a proxy of economic activity): $$\max \sum_{t=1}^T a_t / T$$ over a 100-year period. We have decided (initially) that an acceptable solution is one which will result in the lake eutrophying no more than 10% of the time.
+The goal of the optimization is to maximize the town's average phosphorous concentration releases (as a proxy of economic activity): $\max \sum_{t=1}^T a_t / T$ over a 100-year period. We have decided (initially) that an acceptable solution is one which will result in the lake eutrophying no more than 10% of the time.
 
 The non-point source samples can be sampled using the following code block:
-
+:::
 ```{julia}
 Random.seed!(1)
 
@@ -117,6 +117,7 @@ function lake(a, y, q, b, T)
 end
 ```
 
+::: {.cell .markdown}
 However, this isn't sufficient on its own! `Metaheuristics.jl` (and most simulation-optimization packages) require the use of a *wrapper* function, which accepts as inputs both parameters to be optimized (in this case, point-source releases `a`) and parameters which will be fixed (the others; see below for how to incorporate these into the syntax) and returns the required information for the optimization procedure.
 
 `Metaheuristics.jl` wants its optimizing wrapper function to return (in order):
@@ -124,6 +125,8 @@ However, this isn't sufficient on its own! `Metaheuristics.jl` (and most simulat
 * the objective(s) (in this case, the mean of `a`, $\sum_t a_t / T$), 
 * a vector of the degrees to which the solution fails to achieve any inequality constraints (positive values indicate a larger failure, values below zero are considered acceptable)
 * a vector of the degrees to which the solution fails to achieve any equality constraints (only values of zero indicate success), which in this case is not relevant, so we just return `[0.0]`.
+
+:::
 
 ```{julia}
 # function producing optimization outputs
@@ -146,6 +149,7 @@ function lake_opt(a, y, q, b, T, Xcrit)
 end
 ```
 
+::: {.cell .markdown}
 To optimize using DE (differential evolution), use the following syntax:
 
 ```julia
@@ -155,19 +159,19 @@ results = optimize(f, bounds, DE(options=Options(f_calls_limit=max_evals)))
 where `bounds` is a `Matrix` of lower bounds (first row) and upper bounds (last row), and `max_evals` is an integer for the maximum number of evaluations. 
 
 * For example, to set bounds for all decision variables between 0 and 0.5, you can use 
-    ```julia
-    bounds = [zeros(T) 0.5ones(T)]'
-    ```
+```julia
+bounds = [zeros(T) 0.5ones(T)]'
+```
 * Increasing `max_evals` can help you find a better solution, but at a larger computational expense.
 * You can use an anonymous function to fix values for non-optimized parameters, *e.g.*
-    ```julia
-    y = ...
-    q = ...
-    b = ...
-    T = ...
-    Xcrit = ...
-    results = optimize(a -> lake_opt(a, y, q, b, t, Xcrit), bounds, DE(options=Options(f_calls_limit=max_evals)))
-    ```
+```julia
+y = ...
+q = ...
+b = ...
+T = ...
+Xcrit = ...
+results = optimize(a -> lake_opt(a, y, q, b, t, Xcrit), bounds, DE(options=Options(f_calls_limit=max_evals)))
+```
 
 
 Then to get the approximated minimum value:
@@ -183,6 +187,7 @@ x = minimizer(result)
 ```
 
 The last piece is to get the critical value (to identify failures), which we can do using `Roots.jl`, which finds zeros of functions:
+:::
 
 ```{julia}
 # define a function whose zeros are the critical values
@@ -203,11 +208,11 @@ Using the default setup above, find the approximate optimum value. What is the v
 ::: {.cell .markdown}
 Feel free to experiment with some of the degrees of freedom in finding the optimum value. For example:
 
-    * What failure probability are you using to characterize acceptable solutions?
-    * How many Monte Carlo samples are you using?
-    * What bounds are you searching over for the releases?
-    * How many function evaluations are you using for the search?
-    * What is the impact of different [`Metaheuristics.jl` algorithms](https://docs.juliahub.com/Metaheuristics/aJ70z/3.2.12/algorithms/)?
+* What failure probability are you using to characterize acceptable solutions?
+* How many Monte Carlo samples are you using?
+* What bounds are you searching over for the releases?
+* How many function evaluations are you using for the search?
+* What is the impact of different [`Metaheuristics.jl` algorithms](https://docs.juliahub.com/Metaheuristics/aJ70z/3.2.12/algorithms/)?
 
 Note that you might want to modify some of these together: for example, lower acceptable failure probabilities often require more function evaluations to find acceptable values, and more Monte Carlo samples increase computational expense, so fewer function evaluations may be completed in the same time.
 
