@@ -47,7 +47,7 @@ jobs:
         uses: quarto-dev/quarto-actions/render@v2
         with:
           to: ipynb
-          path: lab03.qmd
+          path: lab04.qmd
 
       - name: Commit and Push
         uses: stefanzweifel/git-auto-commit-action@v4
